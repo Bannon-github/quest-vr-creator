@@ -2,10 +2,10 @@
  * Spawn Intelligence Hook for Quest VR Creator
  * Purpose: Provides reusable, intelligent object spawning logic.
  * - Dynamic placement in front of user/camera or along controller ray.
- * - Supports multiple primitive types with sensible defaults.
- * - Integrates with physics, super-hands, state management.
- * - Error resilient.
- * Aligned: More intelligence (smart pos, extensible types), less errors (validation, try-catch, logs).
+ * - Supports multiple primitive types with sensible defaults (cube, sphere, cylinder, cone, torus).
+ * - Integrates with physics, super-hands, state management, selectedColor, random colors.
+ * - Error resilient with unique IDs for reliable undo.
+ * Aligned: More intelligence (smart pos, extensible types, color state), less errors (validation, try-catch, logs).
  * Can be merged into A-Frame component or used standalone.
  * Tested: Syntax OK. Logic reviewed for A-Frame + THREE.js compatibility.
  */
@@ -14,8 +14,8 @@
   'use strict';
 
   // Reusable intelligent spawn function
-  // @param {string} type - 'cube' | 'sphere' | 'cylinder' | etc.
-  // @param {object} options - { color, size, positionOverride, useControllerRay }
+  // @param {string} type - 'cube' | 'sphere' | 'cylinder' | 'cone' | 'torus' | etc.
+  // @param {object} options - { color, size, positionOverride, useControllerRay, randomColor }
   // @returns {HTMLElement|null} the created entity or null on error
   window.spawnIntelligentObject = function(type = 'cube', options = {}) {
     return window.safeExecute(() => {
@@ -49,28 +49,48 @@
       newObj.setAttribute('position', spawnPos);
       newObj.setAttribute('dynamic-body', 'shape: box'); // default physics, override per type if needed
 
-      let geometry, materialColor = options.color || '#FFCC00';
+      // Prefer state selectedColor if set and no explicit color
+      let materialColor = options.color || (window.VRCreatorState && window.VRCreatorState.selectedColor) || '#FFCC00';
+      // Random color variety if flag or random tool
+      if (options.randomColor || (window.VRCreatorState && window.VRCreatorState.selectedTool === 'random')) {
+        const hues = ['#FFCC00', '#EF2D5E', '#4CC3D9', '#7BC8A4', '#FF9F1C', '#9B5DE5', '#00F5D4', '#F15BB5'];
+        materialColor = hues[Math.floor(Math.random() * hues.length)];
+      }
 
+      let geometry;
       switch (type.toLowerCase()) {
         case 'sphere':
           geometry = 'primitive: sphere; radius: 0.4';
           newObj.setAttribute('dynamic-body', 'shape: sphere');
-          materialColor = options.color || '#EF2D5E';
+          if (!options.color && !(window.VRCreatorState && window.VRCreatorState.selectedColor)) materialColor = '#EF2D5E';
           break;
         case 'cylinder':
           geometry = 'primitive: cylinder; radius: 0.3; height: 0.8';
           newObj.setAttribute('dynamic-body', 'shape: cylinder');
-          materialColor = options.color || '#4CC3D9';
+          if (!options.color && !(window.VRCreatorState && window.VRCreatorState.selectedColor)) materialColor = '#4CC3D9';
+          break;
+        case 'cone':
+          geometry = 'primitive: cone; radiusBottom: 0.35; radiusTop: 0.01; height: 0.7';
+          newObj.setAttribute('dynamic-body', 'shape: cylinder'); // approx physics
+          if (!options.color && !(window.VRCreatorState && window.VRCreatorState.selectedColor)) materialColor = '#7BC8A4';
+          break;
+        case 'torus':
+          geometry = 'primitive: torus; radius: 0.3; radiusTubular: 0.08';
+          newObj.setAttribute('dynamic-body', 'shape: sphere'); // approx
+          if (!options.color && !(window.VRCreatorState && window.VRCreatorState.selectedColor)) materialColor = '#9B5DE5';
           break;
         case 'cube':
         default:
           geometry = 'primitive: box; width: 0.5; height: 0.5; depth: 0.5';
-          materialColor = options.color || '#FFCC00';
+          if (!options.color && !(window.VRCreatorState && window.VRCreatorState.selectedColor)) materialColor = '#FFCC00';
           break;
       }
 
       newObj.setAttribute('geometry', geometry);
-      newObj.setAttribute('material', `color: ${materialColor}; metalness: 0.2; roughness: 0.8`);
+      newObj.setAttribute('material', `color: ${materialColor}; metalness: 0.3; roughness: 0.7`);
+      // Unique id for reliable undo/history
+      const objId = `spawned-${type}-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+      newObj.id = objId;
       // Add super-hands grab support implicitly via physics + class
 
       scene.appendChild(newObj);
@@ -80,10 +100,14 @@
         window.VRCreatorState.spawnedCount = (window.VRCreatorState.spawnedCount || 0) + 1;
         window.VRCreatorState.lastSpawnPos = spawnPos;
         if (!window.VRCreatorState.spawnedObjects) window.VRCreatorState.spawnedObjects = [];
-        window.VRCreatorState.spawnedObjects.push({ id: newObj.id || `obj-${Date.now()}`, type, pos: spawnPos });
+        window.VRCreatorState.spawnedObjects.push({ id: objId, type, pos: spawnPos, color: materialColor, timestamp: Date.now() });
+        // Trigger reactive update
+        if (typeof window.updateVRState === 'function') {
+          window.updateVRState({ spawnedCount: window.VRCreatorState.spawnedCount });
+        }
       }
 
-      console.log(`✅ Spawned intelligent ${type} at ${spawnPos} (total: ${window.VRCreatorState ? window.VRCreatorState.spawnedCount : 'N/A'})`);
+      console.log(`✅ Spawned intelligent ${type} at ${spawnPos} color:${materialColor} (total: ${window.VRCreatorState ? window.VRCreatorState.spawnedCount : 'N/A'})`);
       return newObj;
     }, 'Spawn Intelligent Object', null);
   };
@@ -120,5 +144,5 @@
     console.log('✅ spawn-button component registered via hook (safe, no duplicate).');
   }
 
-  console.log('✅ Spawn Intelligence Hook loaded - ready for extensible, smart object creation.');
+  console.log('✅ Spawn Intelligence Hook loaded - ready for extensible, smart object creation (cube/sphere/cylinder/cone/torus + color state).');
 })();
