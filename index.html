@@ -1,1 +1,237 @@
-contents of /home/workdir/artifacts/temp_hooks/index.html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Quest VR Creator — Immersive Object Creation for Meta Quest 3</title>
+  <meta name="description" content="Intelligent A-Frame VR creator with physics, super-hands, modular hooks for error mitigation, state, intelligent spawning, and reactive tablet UI. Everything done with Grok using automations.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- A-Frame core -->
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+  <!-- Physics system -->
+  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-physics-system@v4.2.2/dist/aframe-physics-system.min.js"></script>
+  <!-- Super-hands for grab/scale/rotate interactions -->
+  <script src="https://unpkg.com/super-hands@3.0.5/dist/super-hands.min.js"></script>
+  <!-- Event-set for declarative interactions (optional helpers) -->
+  <script src="https://cdn.jsdelivr.net/gh/supermedium/superframe@master/components/event-set/dist/aframe-event-set-component.min.js"></script>
+
+  <!-- Intelligence Layer: hooks in dependency order (error first for safeExecute) -->
+  <script src="hooks/error-mitigation-hook.js"></script>
+  <script src="hooks/state-management-hook.js"></script>
+  <script src="hooks/spawn-intelligence-hook.js"></script>
+  <script src="hooks/tablet-ui-hook.js"></script>
+
+  <style>
+    html, body { margin: 0; padding: 0; overflow: hidden; background: #000; }
+    .a-enter-vr-button { background: #4CC3D9 !important; }
+  </style>
+</head>
+<body>
+  <a-scene
+    physics="driver: local; debug: false; gravity: -9.8"
+    background="color: #111122"
+    fog="type: exponential; color: #111122; density: 0.04"
+    renderer="antialias: true; colorManagement: true; physicallyCorrectLights: true"
+    vr-mode-ui="enabled: true"
+    loading-screen="dotsColor: #4CC3D9; backgroundColor: #111122"
+  >
+    <!-- Assets (none required yet; future GLTF library) -->
+    <a-assets>
+      <!-- Placeholder for future models -->
+    </a-assets>
+
+    <!-- Lighting optimized for Quest standalone performance -->
+    <a-entity light="type: ambient; color: #445566; intensity: 0.6"></a-entity>
+    <a-entity light="type: directional; color: #FFFFFF; intensity: 0.85; castShadow: false" position="2 4 1"></a-entity>
+    <a-entity light="type: point; color: #88AACC; intensity: 0.4; distance: 12" position="0 3 -2"></a-entity>
+
+    <!-- Ground plane with physics -->
+    <a-plane
+      id="ground"
+      position="0 0 0"
+      rotation="-90 0 0"
+      width="40"
+      height="40"
+      material="color: #1a1a2e; roughness: 0.9; metalness: 0.1; shader: standard"
+      static-body="shape: box"
+      class="raycaster-target"
+    ></a-plane>
+
+    <!-- Subtle grid helper for spatial orientation -->
+    <a-entity
+      geometry="primitive: plane; width: 40; height: 40"
+      material="color: #2a2a4a; wireframe: true; opacity: 0.15; transparent: true; shader: flat"
+      position="0 0.01 0"
+      rotation="-90 0 0"
+    ></a-entity>
+
+    <!-- Sample starter objects (physics + super-hands ready) -->
+    <a-box
+      id="sample-cube"
+      position="-1.2 0.5 -3"
+      width="0.6" height="0.6" depth="0.6"
+      material="color: #FFCC00; metalness: 0.15; roughness: 0.7"
+      dynamic-body="shape: box; mass: 1"
+      class="raycaster-target"
+    ></a-box>
+    <a-sphere
+      id="sample-sphere"
+      position="0 0.6 -3.5"
+      radius="0.4"
+      material="color: #EF2D5E; metalness: 0.2; roughness: 0.6"
+      dynamic-body="shape: sphere; mass: 0.8"
+      class="raycaster-target"
+    ></a-sphere>
+    <a-cylinder
+      id="sample-cylinder"
+      position="1.2 0.5 -3"
+      radius="0.3" height="0.8"
+      material="color: #4CC3D9; metalness: 0.1; roughness: 0.8"
+      dynamic-body="shape: cylinder; mass: 1.2"
+      class="raycaster-target"
+    ></a-cylinder>
+
+    <!-- Player / Camera Rig with Quest controllers + super-hands + raycaster -->
+    <a-entity id="rig" position="0 0 0">
+      <a-camera
+        id="camera"
+        position="0 1.6 0"
+        look-controls="pointerLockEnabled: false"
+        wasd-controls="enabled: true"
+      >
+        <!-- Optional cursor for desktop fallback -->
+        <a-cursor
+          fuse="false"
+          raycaster="objects: .raycaster-target; far: 10; interval: 80"
+          material="color: #4CC3D9; shader: flat"
+          scale="0.6 0.6 0.6"
+        ></a-cursor>
+      </a-camera>
+
+      <!-- Left hand / controller -->
+      <a-entity
+        id="leftHand"
+        hand-controls="hand: left; handModelStyle: lowPoly; color: #CCCCCC"
+        oculus-touch-controls="hand: left"
+        super-hands
+        sphere-collider="objects: .raycaster-target; radius: 0.05"
+        raycaster="objects: .raycaster-target; far: 4; showLine: true; lineColor: #4CC3D9; interval: 50"
+        line="color: #4CC3D9; opacity: 0.7"
+        position="0 1.5 -0.3"
+      ></a-entity>
+
+      <!-- Right hand / controller -->
+      <a-entity
+        id="rightHand"
+        hand-controls="hand: right; handModelStyle: lowPoly; color: #CCCCCC"
+        oculus-touch-controls="hand: right"
+        super-hands
+        sphere-collider="objects: .raycaster-target; radius: 0.05"
+        raycaster="objects: .raycaster-target; far: 4; showLine: true; lineColor: #EF2D5E; interval: 50"
+        line="color: #EF2D5E; opacity: 0.7"
+        position="0 1.5 -0.3"
+      ></a-entity>
+    </a-entity>
+
+    <!-- 3D Tablet UI foundation (populated dynamically by tablet-ui-hook) -->
+    <a-entity
+      id="tablet"
+      position="0 1.25 -0.9"
+      rotation="-15 0 0"
+      geometry="primitive: plane; width: 0.85; height: 0.55"
+      material="color: #1a1a44; shader: flat; opacity: 0.95; transparent: true"
+      class="raycaster-target"
+    >
+      <!-- Title placeholder; hook will manage/update -->
+      <a-text
+        id="tablet-title"
+        value="Object Creator"
+        position="0 0.2 0.01"
+        align="center"
+        color="#FFFFFF"
+        width="0.75"
+        font="roboto"
+      ></a-text>
+      <a-text
+        id="tablet-stats"
+        value="Spawned: 0 | Tool: cube"
+        position="0 -0.18 0.01"
+        align="center"
+        color="#88FFAA"
+        width="0.7"
+        font="roboto"
+      ></a-text>
+    </a-entity>
+
+    <!-- Subtle instructional text (desktop / first-time) -->
+    <a-text
+      value="Point controllers at tablet buttons + trigger to spawn\nGrab / scale / rotate objects with super-hands"
+      position="0 2.2 -2.5"
+      align="center"
+      color="#AABBCC"
+      width="3.5"
+      opacity="0.7"
+    ></a-text>
+  </a-scene>
+
+  <!-- Main initialization script — intelligence bootstrap -->
+  <script>
+    (function () {
+      'use strict';
+
+      function boot() {
+        // Ensure A-Frame scene is ready
+        const scene = document.querySelector('a-scene');
+        if (!scene) {
+          console.error('No a-scene found');
+          return;
+        }
+
+        // Wait for scene load so entities & components exist
+        if (scene.hasLoaded) {
+          onSceneReady();
+        } else {
+          scene.addEventListener('loaded', onSceneReady);
+        }
+      }
+
+      function onSceneReady() {
+        window.safeExecute(() => {
+          console.log('🚀 Quest VR Creator scene ready — initializing intelligence layer...');
+
+          // Initialize reactive multi-tool tablet UI (from tablet-ui-hook)
+          if (typeof window.initTabletUI === 'function') {
+            window.initTabletUI();
+          } else {
+            console.warn('initTabletUI not available — check hook load order');
+          }
+
+          // Seed initial state if needed
+          if (window.VRCreatorState) {
+            window.updateVRState({
+              selectedTool: 'cube',
+              ui: { tabletVisible: true, lastInteraction: Date.now() }
+            });
+          }
+
+          // Optional: expose a simple keyboard shortcut for desktop testing
+          window.addEventListener('keydown', (e) => {
+            if (e.key === '1') window.spawnIntelligentObject('cube');
+            if (e.key === '2') window.spawnIntelligentObject('sphere');
+            if (e.key === '3') window.spawnIntelligentObject('cylinder');
+            if (e.key === 'z' && (e.ctrlKey || e.metaKey)) window.undoLastSpawn();
+          });
+
+          console.log('✅ Quest VR Creator fully initialized. Use controllers or keys 1/2/3 to spawn.');
+        }, 'Boot VR Creator');
+      }
+
+      // Start when DOM ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot);
+      } else {
+        boot();
+      }
+    })();
+  </script>
+</body>
+</html>
