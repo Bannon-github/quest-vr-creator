@@ -33,6 +33,7 @@
     renderer="antialias: true; colorManagement: true; physicallyCorrectLights: true"
     vr-mode-ui="enabled: true"
     loading-screen="dotsColor: #4CC3D9; backgroundColor: #111122"
+    stats
   >
     <!-- Assets (none required yet; future GLTF library) -->
     <a-assets>
@@ -132,12 +133,12 @@
       ></a-entity>
     </a-entity>
 
-    <!-- 3D Tablet UI foundation (populated dynamically by tablet-ui-hook) -->
+    <!-- 3D Tablet UI foundation (populated dynamically by tablet-ui-hook) - slightly taller for 5 buttons + actions -->
     <a-entity
       id="tablet"
       position="0 1.25 -0.9"
       rotation="-15 0 0"
-      geometry="primitive: plane; width: 0.85; height: 0.55"
+      geometry="primitive: plane; width: 0.95; height: 0.65"
       material="color: #1a1a44; shader: flat; opacity: 0.95; transparent: true"
       class="raycaster-target"
     >
@@ -145,26 +146,26 @@
       <a-text
         id="tablet-title"
         value="Object Creator"
-        position="0 0.2 0.01"
+        position="0 0.25 0.01"
         align="center"
         color="#FFFFFF"
-        width="0.75"
+        width="0.85"
         font="roboto"
       ></a-text>
       <a-text
         id="tablet-stats"
         value="Spawned: 0 | Tool: cube"
-        position="0 -0.18 0.01"
+        position="0 -0.25 0.01"
         align="center"
         color="#88FFAA"
-        width="0.7"
+        width="0.8"
         font="roboto"
       ></a-text>
     </a-entity>
 
     <!-- Subtle instructional text (desktop / first-time) -->
     <a-text
-      value="Point controllers at tablet buttons + trigger to spawn\nGrab / scale / rotate objects with super-hands"
+      value="Point controllers at tablet buttons + trigger to spawn\nGrab / scale / rotate objects with super-hands\nKeys: 1-5 spawn, U undo, Ctrl+C clear"
       position="0 2.2 -2.5"
       align="center"
       color="#AABBCC"
@@ -213,15 +214,18 @@
             });
           }
 
-          // Optional: expose a simple keyboard shortcut for desktop testing
+          // Optional: expose keyboard shortcuts for desktop testing of all new features
           window.addEventListener('keydown', (e) => {
-            if (e.key === '1') window.spawnIntelligentObject('cube');
-            if (e.key === '2') window.spawnIntelligentObject('sphere');
-            if (e.key === '3') window.spawnIntelligentObject('cylinder');
-            if (e.key === 'z' && (e.ctrlKey || e.metaKey)) window.undoLastSpawn();
+            if (e.key === '1') window.spawnIntelligentObject && window.spawnIntelligentObject('cube');
+            if (e.key === '2') window.spawnIntelligentObject && window.spawnIntelligentObject('sphere');
+            if (e.key === '3') window.spawnIntelligentObject && window.spawnIntelligentObject('cylinder');
+            if (e.key === '4') window.spawnIntelligentObject && window.spawnIntelligentObject('cone');
+            if (e.key === '5') window.spawnIntelligentObject && window.spawnIntelligentObject('torus');
+            if (e.key === 'u' || e.key === 'U') window.undoLastSpawn && window.undoLastSpawn();
+            if (e.key === 'c' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); window.clearAllSpawned && window.clearAllSpawned(); }
           });
 
-          console.log('✅ Quest VR Creator fully initialized. Use controllers or keys 1/2/3 to spawn.');
+          console.log('✅ Quest VR Creator fully initialized with new features (cone/torus/undo/clear/color/stats). Use controllers or keys 1-5 / U / Ctrl+C.');
         }, 'Boot VR Creator');
       }
 
