@@ -73,6 +73,16 @@ jobs:
             echo "⚠️ No hooks/ directory found - consider adding for full intelligence (see skill/hooks/)."
           else
             echo "✅ All hooks validated successfully. Project now embodies modular, error-resistant, intelligent design."
+            # Extra intelligence: verify hooks are not empty placeholders
+            for hook in hooks/*.js; do
+              size=$(wc -c < "$hook")
+              if [ "$size" -lt 100 ]; then
+                echo "⚠️ $hook is suspiciously small ($size bytes) — possible placeholder. Review content."
+              fi
+              if ! grep -q "function\|window\." "$hook"; then
+                echo "⚠️ $hook may lack expected exports — check for window.* or function definitions."
+              fi
+            done
           fi
 
       - name: Intelligence & Best Practices Guidance (Non-Blocking)
