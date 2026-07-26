@@ -1,9 +1,9 @@
 /**
  * State Management Hook for Quest VR Creator
  * Purpose: Centralized, intelligent app state for tracking tools, spawned objects, UI, user actions, colors, materials, persistence.
- * Enables features like undo, clear all, stats, localStorage persist, material presets, export, tool switching.
- * Less errors: validated updates, change events for reactive UI.
- * More intelligence: queryable history, counts, easy extension for new primitives and actions.
+ * Enables features like undo, clear all, stats, localStorage persist, material presets, export, tool switching, delete by id.
+ * Less errors: validated updates, change events for reactive UI, safeExecute wrappers.
+ * More intelligence: queryable history, counts, easy extension for new primitives and actions, material + persist.
  * Tested: Syntax valid.
  */
 
@@ -211,15 +211,14 @@
         materialPreset: data.materialPreset || 'standard',
         selectedMaterial: data.selectedMaterial || { metalness: 0.3, roughness: 0.7, opacity: 1.0 }
       });
-      // Respawn each (use spawn but with pos override and no history push initially, or push)
+      // Respawn each
       data.spawnedObjects.forEach(obj => {
         if (typeof window.spawnIntelligentObject === 'function') {
-          const spawned = window.spawnIntelligentObject(obj.type, {
+          window.spawnIntelligentObject(obj.type, {
             color: obj.color,
             positionOverride: obj.pos,
             material: obj.material || data.selectedMaterial
           });
-          // History already updated by spawn, but to avoid double count ok since clear first
         }
       });
       console.log(`📂 Scene loaded from localStorage (${data.spawnedObjects.length} objects restored).`);

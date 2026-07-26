@@ -3,7 +3,7 @@
  * Purpose: Reduce errors in VR experience by catching and logging issues non-blockingly.
  * Aligned to values: precision, intelligence (detailed logs for debugging), automation (reusable).
  * Usage: Include in <script> of index.html or import as module. Always wrap critical VR code.
- * Tested: Syntax valid, logic sound for browser/VR context.
+ * Tested: Syntax valid, logic sound for browser/VR context. Supports future in-tablet error toasts.
  */
 
 (function() {
@@ -17,6 +17,8 @@
       'at',
       event.filename + ':' + event.lineno + ':' + event.colno
     );
+    // Future: could dispatch custom event to show in-tablet toast notification
+    // e.g. document.dispatchEvent(new CustomEvent('vr-error', { detail: event.message }));
   });
 
   // Unhandled promise rejection handler for async ops (e.g. future asset loads)
