@@ -29,7 +29,6 @@ jobs:
       - name: Validate JavaScript Syntax (Error Reduction Hook)
         run: |
           echo "🧠 Extracting inline script for syntax validation to catch errors early and ensure deploy intelligence..."
-          # Write inline script to temp file for --check (syntax only, no execution/runtime errors from missing DOM/AFRAME)
           node -e '
             const fs = require("fs");
             const html = fs.readFileSync("index.html", "utf8");
@@ -43,10 +42,9 @@ jobs:
               process.exit(0);
             }
           '
-          # Now syntax check only - catches parse errors without running browser-specific code
           if node --check /tmp/vr-script.js; then
             echo "✅ JavaScript syntax validation PASSED - no syntax errors detected. Code is clean for Quest VR."
-            echo "🧠 Intelligence Note: Hooks integrated (error-mitigation, spawn-intelligence, state-management, tablet-ui). Full modular intelligence active for dynamic spawning, reactive UI, error resilience, 5 primitives, color/undo/clear."
+            echo "🧠 Intelligence Note: Hooks integrated (error-mitigation, spawn-intelligence, state-management, tablet-ui). Full modular intelligence active for dynamic spawning, reactive UI, error resilience, 5 primitives, color/material/undo/clear/persist/export/holographic."
             echo "🧠 Recommended: After changes, run full Local Development Workflow from quest-vr-creator skill (Analyze, Plan, Implement, Test syntax+local+VR, Correct, Update skill)."
           else
             echo "❌ JavaScript syntax ERROR detected - failing build to prevent deploying broken code to Quest users."
@@ -55,8 +53,7 @@ jobs:
 
       - name: Validate Hooks JavaScript Syntax (Extended Intelligence & Error Prevention)
         run: |
-          echo "🧠 Validating hooks/*.js files - these provide the core intelligence layer (state, spawn, UI, error mitigation). Ensuring zero syntax errors for robust VR experience."
-          hooks_found=false
+          echo "🧠 Validating hooks/*.js files - these provide the core intelligence layer (state, spawn, UI, error mitigation, materials, persist). Ensuring zero syntax errors for robust VR experience."
           expected_hooks=("error-mitigation-hook.js" "state-management-hook.js" "spawn-intelligence-hook.js" "tablet-ui-hook.js")
           for expected in "${expected_hooks[@]}"; do
             if [ ! -f "hooks/$expected" ]; then
@@ -66,7 +63,6 @@ jobs:
           done
           for hook in hooks/*.js; do
             if [ -f "$hook" ]; then
-              hooks_found=true
               echo "Checking $hook ..."
               if node --check "$hook"; then
                 echo "✅ $hook syntax PASSED - intelligence module clean."
@@ -76,36 +72,29 @@ jobs:
               fi
             fi
           done
-          if [ "$hooks_found" = false ]; then
-            echo "❌ No hooks/ directory found - required for full intelligence (see skill/hooks/)."
-            exit 1
-          else
-            echo "✅ All hooks validated successfully. Project embodies modular, error-resistant, intelligent design."
-            # Extra intelligence: verify hooks are not empty placeholders + have expected exports
-            for hook in hooks/*.js; do
-              size=$(wc -c < "$hook")
-              if [ "$size" -lt 500 ]; then
-                echo "❌ $hook is suspiciously small ($size bytes) — possible placeholder regression. Blocking deploy."
-                exit 1
-              fi
-              if ! grep -qE "function|window\." "$hook"; then
-                echo "⚠️ $hook may lack expected exports — check for window.* or function definitions."
-              fi
-            done
-            # Size sanity for expanded features
-            spawn_size=$(wc -c < hooks/spawn-intelligence-hook.js)
-            tablet_size=$(wc -c < hooks/tablet-ui-hook.js)
-            if [ "$spawn_size" -lt 4000 ] || [ "$tablet_size" -lt 5000 ]; then
-              echo "⚠️ Spawn or tablet hook smaller than expected for current feature set (cone/torus/color/undo/clear). Review content."
-            else
-              echo "✅ Hook sizes consistent with expanded feature set (5 primitives + actions)."
+          echo "✅ All hooks validated successfully. Project embodies modular, error-resistant, intelligent design."
+          for hook in hooks/*.js; do
+            size=$(wc -c < "$hook")
+            if [ "$size" -lt 500 ]; then
+              echo "❌ $hook is suspiciously small ($size bytes) — possible placeholder regression. Blocking deploy."
+              exit 1
             fi
+            if ! grep -qE "function|window\." "$hook"; then
+              echo "⚠️ $hook may lack expected exports — check for window.* or function definitions."
+            fi
+          done
+          spawn_size=$(wc -c < hooks/spawn-intelligence-hook.js)
+          tablet_size=$(wc -c < hooks/tablet-ui-hook.js)
+          state_size=$(wc -c < hooks/state-management-hook.js)
+          if [ "$spawn_size" -lt 5000 ] || [ "$tablet_size" -lt 8000 ] || [ "$state_size" -lt 8000 ]; then
+            echo "⚠️ One or more hooks smaller than expected for current feature set (materials/persist/5-primitives). Review content."
+          else
+            echo "✅ Hook sizes consistent with expanded feature set (5 primitives + materials + persist + actions + holographic)."
           fi
 
       - name: Intelligence & Best Practices Guidance + Feature Presence (Non-Blocking Advisory + Critical Checks)
         run: |
-          echo "🧠 Running intelligence scan for key VR Creator patterns (state, error hooks, spawn logic, tablet UI, expanded features)..."
-          # Critical presence of hooks files already enforced above
+          echo "🧠 Running intelligence scan for key VR Creator patterns (state, error hooks, spawn logic, tablet UI, materials, persist, expanded features)..."
           if grep -q "VRCreatorState\|updateVRState" index.html || [ -f hooks/state-management-hook.js ]; then
             echo "✅ State management hook/pattern detected — good for intelligence and reactive features."
           else
@@ -120,11 +109,23 @@ jobs:
           if grep -q "initTabletUI\|tablet-ui-hook" index.html || [ -f hooks/tablet-ui-hook.js ]; then
             echo "✅ Tablet UI hook integrated — multi-tool reactive UI active."
           fi
-          # Expanded feature checks (less errors by ensuring they are present after prior sessions)
           if grep -q "clearAllSpawned\|setSelectedColor\|cone\|torus" hooks/*.js; then
             echo "✅ Expanded features detected (clearAll / color / cone / torus) — intelligence layer fully modern."
           else
             echo "⚠️ Some expanded features (clearAllSpawned, setSelectedColor, cone/torus) not found in hooks — may indicate regression."
+          fi
+          if grep -q "setMaterialPreset\|selectedMaterial\|materialPresets" hooks/*.js; then
+            echo "✅ Material system detected (setMaterialPreset / selectedMaterial / presets) — advanced PBR intelligence active."
+          else
+            echo "⚠️ Material features not found — check state/spawn/tablet for material support."
+          fi
+          if grep -q "saveSceneToStorage\|loadSceneFromStorage\|exportSceneJSON\|deleteSpawnedObject" hooks/*.js; then
+            echo "✅ Persistence & export & delete features detected — full scene intelligence layer active."
+          else
+            echo "⚠️ Persist/export/delete not fully present — review state hook."
+          fi
+          if grep -q "makeWristHolographic\|holographic" hooks/*.js; then
+            echo "✅ Holographic wrist tablet support detected — vision-aligned."
           fi
           if grep -q "stats" index.html; then
             echo "✅ a-stats / FPS monitor present for Quest performance tuning."
