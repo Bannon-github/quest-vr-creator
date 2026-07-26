@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <title>Quest VR Creator — Immersive Object Creation for Meta Quest 3</title>
-  <meta name="description" content="Intelligent A-Frame VR creator with physics, super-hands, modular hooks for error mitigation, state, intelligent spawning, and reactive tablet UI. Everything done with Grok using automations.">
+  <meta name="description" content="Intelligent A-Frame VR creator with physics, super-hands, modular hooks for error mitigation, state, intelligent spawning, reactive tablet UI, materials, persistence, holographic wrist, export. Everything done with Grok using automations.">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <!-- A-Frame core -->
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
@@ -133,44 +133,44 @@
       ></a-entity>
     </a-entity>
 
-    <!-- 3D Tablet UI foundation (populated dynamically by tablet-ui-hook) - slightly taller for 5 buttons + actions -->
+    <!-- 3D Tablet UI foundation (populated dynamically by tablet-ui-hook) - holographic wrist ready -->
     <a-entity
       id="tablet"
       position="0 1.25 -0.9"
       rotation="-15 0 0"
-      geometry="primitive: plane; width: 0.95; height: 0.65"
-      material="color: #1a1a44; shader: flat; opacity: 0.95; transparent: true"
+      geometry="primitive: plane; width: 0.95; height: 0.78"
+      material="color: #1a1a44; shader: flat; opacity: 0.92; transparent: true"
       class="raycaster-target"
     >
       <!-- Title placeholder; hook will manage/update -->
       <a-text
         id="tablet-title"
         value="Object Creator"
-        position="0 0.25 0.01"
+        position="0 0.32 0.01"
         align="center"
         color="#FFFFFF"
-        width="0.85"
+        width="0.9"
         font="roboto"
       ></a-text>
       <a-text
         id="tablet-stats"
         value="Spawned: 0 | Tool: cube"
-        position="0 -0.25 0.01"
+        position="0 -0.32 0.01"
         align="center"
         color="#88FFAA"
-        width="0.8"
+        width="0.85"
         font="roboto"
       ></a-text>
     </a-entity>
 
     <!-- Subtle instructional text (desktop / first-time) -->
     <a-text
-      value="Point controllers at tablet buttons + trigger to spawn\nGrab / scale / rotate objects with super-hands\nKeys: 1-5 spawn, U undo, Ctrl+C clear"
-      position="0 2.2 -2.5"
+      value="Point controllers at tablet buttons + trigger to spawn\nGrab / scale / rotate objects with super-hands\nKeys: 1-5 spawn, U undo, M mat, S save, L load, E export, D del, Ctrl+C clear"
+      position="0 2.3 -2.5"
       align="center"
       color="#AABBCC"
-      width="3.5"
-      opacity="0.7"
+      width="4.2"
+      opacity="0.75"
     ></a-text>
   </a-scene>
 
@@ -206,11 +206,17 @@
             console.warn('initTabletUI not available — check hook load order');
           }
 
+          // Apply holographic wrist tablet variant (vision aligned)
+          if (typeof window.makeWristHolographic === 'function') {
+            // Slight delay so hands exist
+            setTimeout(() => window.makeWristHolographic(), 300);
+          }
+
           // Seed initial state if needed
           if (window.VRCreatorState) {
             window.updateVRState({
               selectedTool: 'cube',
-              ui: { tabletVisible: true, lastInteraction: Date.now() }
+              ui: { tabletVisible: true, lastInteraction: Date.now(), holographic: true }
             });
           }
 
@@ -222,10 +228,38 @@
             if (e.key === '4') window.spawnIntelligentObject && window.spawnIntelligentObject('cone');
             if (e.key === '5') window.spawnIntelligentObject && window.spawnIntelligentObject('torus');
             if (e.key === 'u' || e.key === 'U') window.undoLastSpawn && window.undoLastSpawn();
+            if (e.key === 'm' || e.key === 'M') window.setMaterialPreset && window.setMaterialPreset();
+            if (e.key === 's' || e.key === 'S') { if (!e.ctrlKey && !e.metaKey) window.saveSceneToStorage && window.saveSceneToStorage(); }
+            if (e.key === 'l' || e.key === 'L') window.loadSceneFromStorage && window.loadSceneFromStorage();
+            if (e.key === 'e' || e.key === 'E') window.exportSceneJSON && window.exportSceneJSON();
+            if (e.key === 'd' || e.key === 'D') {
+              // delete last
+              const st = window.VRCreatorState;
+              if (st && st.spawnedObjects && st.spawnedObjects.length) {
+                window.deleteSpawnedObject && window.deleteSpawnedObject(st.spawnedObjects[st.spawnedObjects.length-1].id);
+              }
+            }
             if (e.key === 'c' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); window.clearAllSpawned && window.clearAllSpawned(); }
           });
 
-          console.log('✅ Quest VR Creator fully initialized with new features (cone/torus/undo/clear/color/stats). Use controllers or keys 1-5 / U / Ctrl+C.');
+          // Gesture: right hand gripdown on hovered spawned-object deletes it (improved delete)
+          const rightHand = document.querySelector('#rightHand');
+          if (rightHand) {
+            rightHand.addEventListener('gripdown', () => {
+              window.safeExecute(() => {
+                // Find intersected via raycaster or super-hands
+                const raycaster = rightHand.components.raycaster;
+                if (raycaster && raycaster.intersectedEls && raycaster.intersectedEls.length) {
+                  const hit = raycaster.intersectedEls[0];
+                  if (hit && hit.classList.contains('spawned-object')) {
+                    window.deleteSpawnedObject(hit);
+                  }
+                }
+              }, 'Grip Delete Gesture');
+            });
+          }
+
+          console.log('✅ Quest VR Creator fully initialized with NEW features (materials, persist, export, holographic wrist, grip-delete). Use controllers or keys 1-5 / U / M / S / L / E / D / Ctrl+C.');
         }, 'Boot VR Creator');
       }
 
