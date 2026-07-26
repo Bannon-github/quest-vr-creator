@@ -3,9 +3,9 @@
  * Purpose: Provides reusable, intelligent object spawning logic.
  * - Dynamic placement in front of user/camera or along controller ray.
  * - Supports multiple primitive types with sensible defaults (cube, sphere, cylinder, cone, torus).
- * - Integrates with physics, super-hands, state management, selectedColor, random colors.
- * - Error resilient with unique IDs for reliable undo.
- * Aligned: More intelligence (smart pos, extensible types, color state), less errors (validation, try-catch, logs).
+ * - Integrates with physics, super-hands, state management, selectedColor, selectedMaterial, random colors.
+ * - Error resilient with unique IDs for reliable undo/delete.
+ * Aligned: More intelligence (smart pos, extensible types, color/material state), less errors (validation, try-catch, logs).
  * Can be merged into A-Frame component or used standalone.
  * Tested: Syntax OK. Logic reviewed for A-Frame + THREE.js compatibility.
  */
@@ -15,7 +15,7 @@
 
   // Reusable intelligent spawn function
   // @param {string} type - 'cube' | 'sphere' | 'cylinder' | 'cone' | 'torus' | etc.
-  // @param {object} options - { color, size, positionOverride, useControllerRay, randomColor }
+  // @param {object} options - { color, size, positionOverride, useControllerRay, randomColor, material }
   // @returns {HTMLElement|null} the created entity or null on error
   window.spawnIntelligentObject = function(type = 'cube', options = {}) {
     return window.safeExecute(() => {
@@ -57,6 +57,13 @@
         materialColor = hues[Math.floor(Math.random() * hues.length)];
       }
 
+      // Material from options or state
+      let mat = options.material || (window.VRCreatorState && window.VRCreatorState.selectedMaterial) || { metalness: 0.3, roughness: 0.7, opacity: 1.0 };
+      const metalness = mat.metalness !== undefined ? mat.metalness : 0.3;
+      const roughness = mat.roughness !== undefined ? mat.roughness : 0.7;
+      const opacity = mat.opacity !== undefined ? mat.opacity : 1.0;
+      const transparent = opacity < 1.0;
+
       let geometry;
       switch (type.toLowerCase()) {
         case 'sphere':
@@ -87,8 +94,8 @@
       }
 
       newObj.setAttribute('geometry', geometry);
-      newObj.setAttribute('material', `color: ${materialColor}; metalness: 0.3; roughness: 0.7`);
-      // Unique id for reliable undo/history
+      newObj.setAttribute('material', `color: ${materialColor}; metalness: ${metalness}; roughness: ${roughness}; opacity: ${opacity}; transparent: ${transparent}; shader: standard`);
+      // Unique id for reliable undo/history/delete
       const objId = `spawned-${type}-${Date.now()}-${Math.floor(Math.random()*1000)}`;
       newObj.id = objId;
       // Add super-hands grab support implicitly via physics + class
@@ -100,14 +107,21 @@
         window.VRCreatorState.spawnedCount = (window.VRCreatorState.spawnedCount || 0) + 1;
         window.VRCreatorState.lastSpawnPos = spawnPos;
         if (!window.VRCreatorState.spawnedObjects) window.VRCreatorState.spawnedObjects = [];
-        window.VRCreatorState.spawnedObjects.push({ id: objId, type, pos: spawnPos, color: materialColor, timestamp: Date.now() });
+        window.VRCreatorState.spawnedObjects.push({ 
+          id: objId, 
+          type, 
+          pos: spawnPos, 
+          color: materialColor, 
+          material: { metalness, roughness, opacity },
+          timestamp: Date.now() 
+        });
         // Trigger reactive update
         if (typeof window.updateVRState === 'function') {
           window.updateVRState({ spawnedCount: window.VRCreatorState.spawnedCount });
         }
       }
 
-      console.log(`✅ Spawned intelligent ${type} at ${spawnPos} color:${materialColor} (total: ${window.VRCreatorState ? window.VRCreatorState.spawnedCount : 'N/A'})`);
+      console.log(`✅ Spawned intelligent ${type} at ${spawnPos} color:${materialColor} mat:${metalness}/${roughness}/${opacity} (total: ${window.VRCreatorState ? window.VRCreatorState.spawnedCount : 'N/A'})`);
       return newObj;
     }, 'Spawn Intelligent Object', null);
   };
@@ -126,15 +140,13 @@
         this.el.addEventListener('click', () => {
           const spawned = window.spawnIntelligentObject(self.data.type, { color: self.data.color || undefined });
           if (spawned) {
-            // Optional: highlight or feedback
             self.el.emit('object-spawned', { spawnedEl: spawned });
           }
         });
 
         // Bonus: support triggerdown from controllers if super-hands not fully intercepting
         this.el.addEventListener('triggerdown', () => {
-          // Only if not already handled by click in some setups
-          if (!this.el.getAttribute('super-hands')) { // avoid double if using super-hands grab
+          if (!this.el.getAttribute('super-hands')) {
             const spawned = window.spawnIntelligentObject(self.data.type, { color: self.data.color || undefined });
             if (spawned) self.el.emit('object-spawned', { spawnedEl: spawned });
           }
@@ -144,5 +156,5 @@
     console.log('✅ spawn-button component registered via hook (safe, no duplicate).');
   }
 
-  console.log('✅ Spawn Intelligence Hook loaded - ready for extensible, smart object creation (cube/sphere/cylinder/cone/torus + color state).');
+  console.log('✅ Spawn Intelligence Hook loaded - ready for extensible, smart object creation (cube/sphere/cylinder/cone/torus + color/material state).');
 })();
