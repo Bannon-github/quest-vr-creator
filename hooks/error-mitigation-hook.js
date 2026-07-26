@@ -17,15 +17,12 @@
       'at',
       event.filename + ':' + event.lineno + ':' + event.colno
     );
-    // Future: could dispatch custom event to show in-tablet toast notification
-    // e.g. document.dispatchEvent(new CustomEvent('vr-error', { detail: event.message }));
-    // Prevent default if desired, but usually log only for VR stability
   });
 
   // Unhandled promise rejection handler for async ops (e.g. future asset loads)
   window.addEventListener('unhandledrejection', (event) => {
     console.error('🛡️ VR Creator Unhandled Promise Rejection (mitigated):', event.reason);
-    event.preventDefault(); // Prevent console spam in some browsers, still logged above
+    event.preventDefault();
   });
 
   // Reusable safe-execute wrapper for any function - intelligence for error-prone VR ops
@@ -37,11 +34,6 @@
       return fallback;
     }
   };
-
-  // Example usage in components:
-  // this.el.addEventListener('click', () => {
-  //   window.safeExecute(() => { /* spawn logic */ }, 'Spawn Object');
-  // });
 
   console.log('✅ Error Mitigation Hook initialized - VR experience hardened against runtime issues.');
 })();
