@@ -15,12 +15,12 @@ https://mattbannvan.github.io/quest-vr-creator/
 - **Reactive 3D tablet UI**: five color-coded tool buttons (C / S / Y / N / T) + action buttons (UNDO / CLEAR / COLOR / MAT / SAVE / LOAD / EXPORT / DEL) that auto-update stats via state events (shows color + material preset)
 - **Material system**: 5 PBR presets (standard / metal / plastic / matte / glass) cycled via MAT button or key; applied on spawn with opacity support
 - **Persistence**: SAVE / LOAD to localStorage; EXPORT JSON download of full scene (objects + materials + state)
-- **Holographic wrist tablet ready**: `makeWristHolographic()` attaches tablet to left controller with glow (visions aligned)
+- **Holographic wrist tablet**: `makeWristHolographic()` attaches tablet to left controller with cyan emissive glow (visions aligned; auto on load)
 - **Error mitigation layer**: global handlers + `safeExecute()` wrapper — non-blocking, detailed logs
 - **Centralized state** (`VRCreatorState`) with history (id/type/pos/color/material), tool selection, selectedColor, selectedMaterial, materialPresets, `undoLastSpawn()`, `clearAllSpawned()`, `deleteSpawnedObject()`, `setMaterialPreset()`, `saveSceneToStorage()`, `loadSceneFromStorage()`, `exportSceneJSON()`
-- **Dual input reliability**: `click` (desktop) + `triggerdown` (Quest controllers) on all interactive elements
+- **Dual input reliability**: `click` (desktop) + `triggerdown` (Quest controllers) on all interactive elements; grip-down delete gesture
 - **Performance monitoring**: `stats` component for FPS / entity counts (Quest 72-90 fps tuning)
-- **Automated CI**: multi-layer syntax validation of index.html + every hooks/*.js + size/content + feature presence checks (incl. materials + persist + holographic) before deploy
+- **Automated CI**: multi-layer syntax validation of index.html + every hooks/*.js + size/content + feature presence checks (incl. materials + persist + holographic) + docs-desync advisory before deploy
 
 ## Architecture (Intelligence Layer)
 ```
@@ -35,20 +35,21 @@ All hooks are self-contained IIFEs that register on `window` and AFRAME. Order m
 
 ## Automation & Workflows
 - **GitHub Actions** (`.github/workflows/deploy-to-pages.yml`):  
-  On every push to `main` → Node syntax check of inline script + all hooks (hard fail on missing/small/broken) → intelligence + expanded-feature pattern scan (materials/persist/holographic) → deploy to Pages.  
+  On every push to `main` → Node syntax check of inline script + all hooks (hard fail on missing/small/broken) → intelligence + expanded-feature pattern scan (materials/persist/holographic) + docs consistency advisory → deploy to Pages.  
   Fails fast on any syntax or critical intelligence regression — protects Quest users.
-- **Grok Skill** (`quest-vr-creator`): Structured Analyze → Plan → Implement → Test → Correct → Update Skill loop. Guarantees zero untested code and continuous intelligence gains. Local hooks mirror production.
+- **Grok Skill** (`quest-vr-creator`): Structured Analyze → Plan → Implement → Test → Correct → Update Skill + Docs loop. Guarantees zero untested code, continuous intelligence gains, and docs always match code. Local hooks + `scripts/validate-hooks.sh` mirror production gates.
 
 ## Local Development
 1. Clone repo
 2. Serve: `python3 -m http.server 8080` (or any static server)
 3. Open http://localhost:8080
-4. Desktop testing: mouse click tablet buttons or press keys `1`–`5` to spawn (cube/sphere/cyl/cone/torus); `U` undo; `M` cycle material; `S` save; `L` load; `E` export; `Ctrl+C` clear all
-5. Quest testing: enter VR, point ray at tablet, pull trigger; grab/scale/rotate with super-hands
+4. Desktop testing: mouse click tablet buttons or press keys `1`–`5` to spawn (cube/sphere/cyl/cone/torus); `U` undo; `M` cycle material; `S` save; `L` load; `E` export; `D` delete last; `Ctrl+C` clear all
+5. Quest testing: enter VR, point ray at tablet, pull trigger; grab/scale/rotate with super-hands; grip on object to delete; wrist tablet on left hand
+6. Pre-push: run `scripts/validate-hooks.sh` (or from skill) for syntax + features + index cross-check
 
-**Always follow the skill’s Local Development Workflow** before any push.
+**Always follow the skill’s Local Development Workflow** before any push. Keep TODO.md / PROOF.md / README.md synchronized with actual code.
 
 ## Alignment
-This project, its hooks, workflow, and skill exist as a perfect reflection of the priorities of precision, immersive creativity, automation-first development, rigorous error elimination through testing, and maximal intelligence in every step.
+This project, its hooks, workflow, and skill exist as a perfect reflection of the priorities of precision, immersive creativity, automation-first development, rigorous error elimination through testing, and maximal intelligence in every step. Docs accuracy is treated as a first-class error-reduction requirement.
 
 Built and continuously improved with Grok.

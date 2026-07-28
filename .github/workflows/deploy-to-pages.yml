@@ -45,7 +45,7 @@ jobs:
           if node --check /tmp/vr-script.js; then
             echo "✅ JavaScript syntax validation PASSED - no syntax errors detected. Code is clean for Quest VR."
             echo "🧠 Intelligence Note: Hooks integrated (error-mitigation, spawn-intelligence, state-management, tablet-ui). Full modular intelligence active for dynamic spawning, reactive UI, error resilience, 5 primitives, color/material/undo/clear/persist/export/holographic."
-            echo "🧠 Recommended: After changes, run full Local Development Workflow from quest-vr-creator skill (Analyze, Plan, Implement, Test syntax+local+VR, Correct, Update skill)."
+            echo "🧠 Recommended: After changes, run full Local Development Workflow from quest-vr-creator skill (Analyze, Plan, Implement, Test syntax+local+VR, Correct, Update skill + docs)."
           else
             echo "❌ JavaScript syntax ERROR detected - failing build to prevent deploying broken code to Quest users."
             exit 1
@@ -86,8 +86,8 @@ jobs:
           spawn_size=$(wc -c < hooks/spawn-intelligence-hook.js)
           tablet_size=$(wc -c < hooks/tablet-ui-hook.js)
           state_size=$(wc -c < hooks/state-management-hook.js)
-          if [ "$spawn_size" -lt 5000 ] || [ "$tablet_size" -lt 8000 ] || [ "$state_size" -lt 8000 ]; then
-            echo "⚠️ One or more hooks smaller than expected for current feature set (materials/persist/5-primitives). Review content."
+          if [ "$spawn_size" -lt 5000 ] || [ "$tablet_size" -lt 10000 ] || [ "$state_size" -lt 8000 ]; then
+            echo "⚠️ One or more hooks smaller than expected for current feature set (materials/persist/5-primitives/holographic). Review content."
           else
             echo "✅ Hook sizes consistent with expanded feature set (5 primitives + materials + persist + actions + holographic)."
           fi
@@ -138,7 +138,15 @@ jobs:
           if [ -d hooks ]; then
             echo "✅ hooks/ directory present with modular intelligence files."
           fi
-          echo "🧠 All guidance is advisory (except syntax/size which are hard gates) to help build with maximal intelligence and minimal errors. The quest-vr-creator skill + hooks + this workflow form a complete automation system for your vision."
+          # Docs desync advisory (reduces future errors from overclaimed features)
+          if [ -f TODO.md ]; then
+            if grep -qE "GLTF|URL hash|double-grip|Advanced material panel|HOLO|SHARE" TODO.md; then
+              if ! grep -qE "exportSceneGLTF|loadSceneFromHash|adjustMaterial|doubleGrip|HOLO|SHARE" hooks/*.js index.html 2>/dev/null; then
+                echo "⚠️ Docs advisory: TODO.md references advanced features (GLTF/share/adjust/double-grip/HOLO) not found in current hooks/index — correct docs to match code to prevent intelligence desync."
+              fi
+            fi
+          fi
+          echo "🧠 All guidance is advisory (except syntax/size which are hard gates) to help build with maximal intelligence and minimal errors. The quest-vr-creator skill + hooks + this workflow form a complete automation system for your vision. Always sync TODO/PROOF/README to actual code after changes."
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
